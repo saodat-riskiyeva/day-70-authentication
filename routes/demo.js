@@ -1,6 +1,8 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 
+const { ObjectId } = require("mongodb");
+
 const db = require("../data/database");
 
 const router = express.Router();
@@ -108,15 +110,32 @@ router.post("/login", async function (req, res) {
   };
   req.session.isAuthenticated = true;
   req.session.save(function () {
-    res.redirect("/admin");
+    res.redirect("/profile");
   });
 });
 
-router.get("/admin", function (req, res) {
+router.get("/admin", async function (req, res) {
   if (!req.session.isAuthenticated) {
     return res.status(401).render("401");
   }
+
+  const user = await db
+    .getDb()
+    .collection("users")
+    .findOne({ _id: ObjectId.createFromHexString(req.session.user.id) });
+
+  if (!user || !user.isAdmin) {
+    return res.status(403).render("403");
+  }
+
   res.render("admin");
+});
+
+router.get("/profile", function (req, res) {
+  if (!req.session.isAuthenticated) {
+    return res.status(401).render("401");
+  }
+  res.render("profile");
 });
 
 router.post("/logout", function (req, res) {
