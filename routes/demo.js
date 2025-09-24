@@ -10,7 +10,20 @@ router.get("/", function (req, res) {
 });
 
 router.get("/signup", function (req, res) {
-  res.render("signup");
+  let sessionInputData = req.session.inputData;
+  if (!sessionInputData) {
+    sessionInputData = {
+      hasError: false,
+      message: "",
+      email: "",
+      confirmEmail: "",
+      password: "",
+    };
+  }
+
+  req.session.inputData = null;
+
+  res.render("signup", { inputData: sessionInputData });
 });
 
 router.get("/login", function (req, res) {
@@ -31,8 +44,18 @@ router.post("/signup", async function (req, res) {
     enteredEmail !== enteredConfirmEmail ||
     !enteredEmail.includes("@")
   ) {
-    console.log("Signup data is not valid");
-    return res.redirect("signup");
+    req.session.inputData = {
+      hasError: true,
+      message: "Invslid data. Please check your input.",
+      email: enteredEmail,
+      confirmEmail: enteredConfirmEmail,
+      password: enteredPassword,
+    };
+
+    req.session.save(function () {
+      res.redirect("/signup");
+    });
+    return;
   }
 
   const existingUser = await db
