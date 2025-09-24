@@ -90,7 +90,9 @@ router.post("/login", async function (req, res) {
 });
 
 router.get("/admin", function (req, res) {
-  // Check if the user is authenticated (this part is not implemented yet)
+  if (!req.session.isAuthenticated) {
+    return res.status(401).render("401");
+  }
   res.render("admin");
 });
 
